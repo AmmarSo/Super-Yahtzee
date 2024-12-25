@@ -87,67 +87,162 @@ class GameScreen extends StatelessWidget {
     return Expanded(
       child: Container(
         color: const Color(0xFF00A3FF),
-        child: ListView.builder(
-          itemCount: leftCategories.length,
-          itemBuilder: (context, index) {
-            final category = leftCategories[index];
-            final score = gameProvider.players[0].scoreCard.scores[category];
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: leftCategories.length,
+                itemBuilder: (context, index) {
+                  final category = leftCategories[index];
+                  final player1Score = gameProvider.players[0].scoreCard.scores[category];
+                  final player2Score = gameProvider.players.length > 1
+                      ? gameProvider.players[1].scoreCard.scores[category]
+                      : null;
 
-            return GestureDetector(
-              onTap: () {
-                if (gameProvider.rollsLeft == 0) {
-                  try {
-                    gameProvider.addScore(category);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
-                    );
-                  }
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius: BorderRadius.circular(8),
+                  return GestureDetector(
+                    onTap: () {
+                      if (gameProvider.rollsLeft == 0) {
+                        try {
+                          gameProvider.addScore(category);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        }
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Center(
+                                  child: _getDiceIcon(index + 1),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                category,
+                                style: GoogleFonts.roboto(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Center(
-                            child: _getDiceIcon(index + 1),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  player1Score?.toString() ?? '-',
+                                  style: GoogleFonts.roboto(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                                if (player2Score != null) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    player2Score?.toString() ?? '-',
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          category,
-                          style: GoogleFonts.roboto(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      score?.toString() ?? '-',
-                      style: GoogleFonts.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        ],
                       ),
                     ),
-                  ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20), // Ajustement de l'espacement avec le bas
+            _buildBonusSection(gameProvider),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBonusSection(GameProvider gameProvider) {
+    final player1Score = gameProvider.players[0].scoreCard.calculateUpperSection();
+    final player2Score = gameProvider.players.length > 1
+        ? gameProvider.players[1].scoreCard.calculateUpperSection()
+        : null;
+    final player1BonusAchieved = player1Score >= 63;
+    final player2BonusAchieved = player2Score != null && player2Score >= 63;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF007ACC),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Section Bonus',
+            style: GoogleFonts.roboto(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Joueur 1: $player1Score/63',
+                style: GoogleFonts.roboto(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: player1BonusAchieved ? Colors.yellow : Colors.white,
                 ),
               ),
-            );
-          },
-        ),
+              if (player1BonusAchieved)
+                const Icon(
+                  Icons.check_circle,
+                  color: Colors.yellow,
+                ),
+              if (player2Score != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Joueur 2: $player2Score/63',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: player2BonusAchieved ? Colors.yellow : Colors.white,
+                  ),
+                ),
+                if (player2BonusAchieved)
+                  const Icon(
+                    Icons.check_circle,
+                    color: Colors.yellow,
+                  ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -170,7 +265,10 @@ class GameScreen extends StatelessWidget {
           itemCount: rightCategories.length,
           itemBuilder: (context, index) {
             final category = rightCategories[index];
-            final score = gameProvider.players[0].scoreCard.scores[category];
+            final player1Score = gameProvider.players[0].scoreCard.scores[category];
+            final player2Score = gameProvider.players.length > 1
+                ? gameProvider.players[1].scoreCard.scores[category]
+                : null;
 
             return GestureDetector(
               onTap: () {
@@ -213,12 +311,30 @@ class GameScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Text(
-                      score?.toString() ?? '-',
-                      style: GoogleFonts.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            player1Score?.toString() ?? '-',
+                            style: GoogleFonts.roboto(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          if (player2Score != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              player2Score?.toString() ?? '-',
+                              style: GoogleFonts.roboto(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],

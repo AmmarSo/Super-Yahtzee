@@ -15,7 +15,7 @@ class ScoreCard {
     'Chance': null,
   };
 
-  // Calcul du total des scores
+  // Méthode pour calculer le score total
   int calculateTotal() {
     return scores.values.where((score) => score != null).fold(0, (a, b) => a + (b ?? 0));
   }
@@ -31,5 +31,13 @@ class ScoreCard {
       throw Exception('La catégorie $category est déjà utilisée.');
     }
     scores[category] = value;
+  }
+
+  // Méthode pour calculer la somme de la section supérieure
+  int calculateUpperSection() {
+    final upperCategories = ['Ones', 'Twos', 'Threes', 'Fours', 'Fives', 'Sixes'];
+    return upperCategories.fold(0, (sum, category) {
+      return sum + (scores[category] ?? 0);
+    });
   }
 }
